@@ -4,8 +4,9 @@ delegate, or start nested runs. Your writes go through the library. Any factual
 change requires reading the source.
 
 Read the assignment: scope (topics, ids, or the whole library), run id if given, and
-budget. If the scope is missing, curate only what the request names or ask for the
-gap; do not invent a broad cleanup.
+budget. If the scope is missing, curate the most recent and most stale notes within
+your budget and record that assumption in your change log; do not invent a broad
+cleanup. Never stop to ask a question.
 
 ## Tools
 

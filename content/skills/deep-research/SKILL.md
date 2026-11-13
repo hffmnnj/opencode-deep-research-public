@@ -1,14 +1,37 @@
 ---
 name: Deep Research
-description: Investigate complex questions with a persistent research library, bounded parallel subagents, independent verification, and cited reports. Use for multi-source comparisons, disputed claims, literature or market investigations, and questions that need evidence beyond a quick lookup; explicit quick requests take the lightweight path.
+description: Investigate complex questions with a persistent research library, bounded parallel subagents, independent verification, and cited reports. Load it proactively, without being asked, for multi-source comparisons, disputed or fast-moving claims, costly-to-get-wrong decisions, and literature or market investigations; explicit quick requests take the lightweight path.
 ---
 
 # Deep Research
 
-Use `/research <question>` for a full run, or `/research-notes <query>` to inspect
-the library. Answer the question, not a quota of searches. Read sources before
-drawing conclusions. A citation is an attribution, not proof that the statement is
-true.
+Answer the question, not a quota of searches. Read sources before drawing
+conclusions. A citation is an attribution, not proof that the statement is true.
+
+## When to start on your own
+
+Do not wait for the user to ask for "deep research". Start this workflow yourself
+when any of these hold, and say so in one line:
+
+- The answer needs evidence from several independent sources, or sources disagree.
+- A wrong answer would be costly or hard to undo (a purchase, a dependency or
+  architecture choice, a security or legal judgment, a published claim).
+- The topic is fast-moving and your memory may be stale.
+- The user is comparing options, assessing a market, or reviewing literature.
+- Library search finds nothing fresh on a topic that drives a decision.
+
+Stay lightweight (library search plus a direct read, no workers) for lookups, for
+anything the repository or one authoritative page answers, and when the user asks
+for a quick answer. Never start a run just to look thorough. If the user explicitly
+asks for depth, sources, or a format, that wins.
+
+Once started, run to completion without human-in-the-loop stops: no clarifying
+questions, plan approvals, or option menus. Choose sensible defaults, record them in
+the plan note, and deliver the finished report.
+
+Always search the library before the web, even on the lightweight path. Only the
+coordinator session launches workers; if you are a subagent, do not start research
+runs.
 
 ## Roles
 
@@ -50,14 +73,16 @@ ordinary multi-part questions.
 
 | Tier | Use | Researchers | Budget | Follow-ups | Verification |
 | --- | --- | --- | --- | --- | --- |
-| Quick | Narrow fact, urgent briefing | 0; you read | 3-5 tool calls | 0 | You check the central claim; label it non-independent |
-| Standard | Bounded comparison or explanation | 1-3 | about 8 each | at most 1 | Independent check of decisive claims when delegated |
-| Deep | Broad multi-part investigation | 3-5 | up to 15 each | at most 2 | Verifier checks central conclusions, numbers, conflicts |
-| Rigorous | Contested or high-stakes question | up to 6 | up to 15 each | at most 2 | Verifier checks every material claim; disclose gaps |
+| Quick | Narrow fact, urgent briefing | 0; you read | 8-12 tool calls | 0 | You check the central claim; label it non-independent |
+| Standard | Bounded comparison or explanation | 1-3 | about 25 each | at most 1 | Independent check of decisive claims when delegated |
+| Deep | Broad multi-part investigation | 3-5 | up to 50 each | at most 2 | Verifier checks central conclusions, numbers, conflicts |
+| Rigorous | Contested or high-stakes question | up to 6 | no fixed cap | at most 3 | Verifier checks every material claim; disclose gaps |
 
 Hard cap: 8 concurrent researchers. Default 3. A budget counts tool calls, including
-searches and reads. Keep capacity for verification and synthesis; do not spend the
-whole envelope on discovery.
+searches and reads. Rigorous researchers have no call cap: they stop on saturation
+(new searches stop surfacing new evidence), on exhausting the assigned scope, or when
+sources are unreachable, and report the calls they used. Keep capacity for
+verification and synthesis; do not spend the whole envelope on discovery.
 
 ## Core loop
 

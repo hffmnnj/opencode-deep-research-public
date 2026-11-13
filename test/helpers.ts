@@ -1,9 +1,10 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EmbedUnavailableError, normalize, type Embedder, type EmbedderStatus } from "../src/library/embed.ts";
 import { Library, type LibraryOptions } from "../src/library/library.ts";
 
-const SCRATCH = process.env.DEEP_RESEARCH_TEST_TMP ?? join("/var/tmp/example/opencode", "dr-tests");
+const SCRATCH = process.env.DEEP_RESEARCH_TEST_TMP ?? join(tmpdir(), "dr-tests");
 
 export async function tempDir(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
   await mkdir(SCRATCH, { recursive: true });

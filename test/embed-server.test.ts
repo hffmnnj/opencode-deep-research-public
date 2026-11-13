@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { parseConfig, resolveSecret } from "../src/config.ts";
+import { writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { defaultDataDir, parseConfig, resolveSecret } from "../src/config.ts";
+import { tempDir } from "./helpers.ts";
 import { EmbedUnavailableError, createEmbedder, embeddingsUrl } from "../src/library/embed.ts";
 
 // A local OpenAI-compatible stub: it checks our request shape, not any real provider's behavior.
@@ -84,6 +89,24 @@ describe("configuration", () => {
     expect(resolveSecret("env://DR_KEY", { DR_KEY: " from-env " })).toBe("from-env");
     expect(resolveSecret("env://NOPE", {})).toBeUndefined();
     expect(resolveSecret("file:///definitely/not/here")).toBeUndefined();
+  });
+
+  test("defaultDataDir_followsXdgThenWindowsLocalAppDataThenHomeLocalShare", () => {
+    expect(defaultDataDir({ XDG_DATA_HOME: "/x" }, "linux")).toBe(join("/x", "opencode-deep-research"));
+    expect(defaultDataDir({ LOCALAPPDATA: "C:\\Users\\a\\AppData\\Local" }, "win32")).toBe(join("C:\\Users\\a\\AppData\\Local", "opencode-deep-research"));
+    expect(defaultDataDir({}, "darwin")).toBe(join(homedir(), ".local", "share", "opencode-deep-research"));
+  });
+
+  test("resolveSecret_readsRealFileUrlsOnEveryPlatform", async () => {
+    const { dir, cleanup } = await tempDir();
+    try {
+      const file = join(dir, "key.txt");
+      await writeFile(file, "  file-secret\n", "utf8");
+      expect(resolveSecret(pathToFileURL(file).href)).toBe("file-secret");
+      expect(resolveSecret(`file://${file}`)).toBe("file-secret");
+    } finally {
+      await cleanup();
+    }
   });
 
   test("modeOff_createsNoEmbedderAndAutoPrefersConfiguredServer", () => {

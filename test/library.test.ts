@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { Library } from "../src/library/library.ts";
 import { parseNote, serializeNote } from "../src/library/note-file.ts";
 import { FakeEmbedder, openLibrary, tempDir } from "./helpers.ts";
@@ -98,7 +98,7 @@ describe("files are authoritative", () => {
   test("unreadableNoteFile_isReportedNotIndexed", async () => {
     lib = await openLibrary(dir);
     const saved = await lib.save(finding("Healthy"));
-    const monthDir = saved.path.slice(0, saved.path.lastIndexOf("/"));
+    const monthDir = dirname(saved.path);
     await writeFile(join(monthDir, "rn_zzzzzzzzzzzz.md"), "no front matter here", "utf8");
     const report = await lib.reindex({ embed: false });
     expect(report.invalid).toHaveLength(1);

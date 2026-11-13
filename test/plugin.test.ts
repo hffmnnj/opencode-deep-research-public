@@ -17,7 +17,6 @@ function fakeContext(options: Record<string, unknown>) {
   const namespaces: { name: string }[] = [];
   const skills: { id: string; path: string; content: string }[] = [];
   const agents = new Map<string, Record<string, unknown>>();
-  const commands: { name: string }[] = [];
   const hooks: string[] = [];
   const systemParts: { type: string; text: string }[] = [];
   const ctx = {
@@ -35,7 +34,6 @@ function fakeContext(options: Record<string, unknown>) {
           },
         }),
     },
-    command: { transform: async (cb: (e: unknown) => void) => cb({ add: (c: { name: string }) => commands.push(c) }) },
     session: {
       hook: async (name: string, cb: (event: { system: typeof systemParts }) => void) => {
         hooks.push(name);
@@ -43,7 +41,7 @@ function fakeContext(options: Record<string, unknown>) {
       },
     },
   };
-  return { ctx, tools, namespaces, skills, agents, commands, hooks, systemParts };
+  return { ctx, tools, namespaces, skills, agents, hooks, systemParts };
 }
 
 const setup = (ctx: unknown) => (plugin as unknown as { setup: (c: unknown) => Promise<(() => void) | void> }).setup(ctx);
@@ -63,16 +61,19 @@ test("setup_bundlesSkillAgentsCommandsAndStaticHint", async () => {
   const f = fakeContext({ libraryPath: join(dir, "lib"), embedding: { mode: "off" }, models: { researcher: "muse/model-x#high" } });
   const cleanupPlugin = await setup(f.ctx);
   expect(f.skills.map((s) => s.id)).toEqual(["deep-research"]);
-  expect(f.skills[0]?.path).toEndWith("content/skills/deep-research/SKILL.md");
+  expect(f.skills[0]?.path.replaceAll("\\", "/")).toEndWith("content/skills/deep-research/SKILL.md");
   expect(f.skills[0]?.content).not.toStartWith("---");
   expect([...f.agents.keys()].sort()).toEqual(["deep-research/librarian", "deep-research/researcher", "deep-research/verifier"]);
   const researcher = f.agents.get("deep-research/researcher");
   expect(researcher?.model).toEqual({ providerID: "muse", id: "model-x", variant: "high" });
   expect(f.agents.get("deep-research/verifier")?.model).toBeUndefined();
   expect(researcher?.permissions).toContainEqual({ action: "subagent", resource: "*", effect: "deny" });
-  expect(f.commands.map((c) => c.name).sort()).toEqual(["research", "research-notes"]);
+  // Agent-first: the fake context has no `command` domain, so setup would throw if it registered slash commands.
+  expect(researcher?.steps).toBeUndefined(); // Rigorous research is uncapped
+  expect(f.agents.get("deep-research/verifier")?.steps).toBeGreaterThanOrEqual(100);
   expect(f.hooks).toEqual(["context"]);
   expect(f.systemParts[0]?.text).toContain("tools.research");
+  expect(f.systemParts[0]?.text).toContain("without waiting to be asked");
   if (cleanupPlugin) cleanupPlugin();
 });
 

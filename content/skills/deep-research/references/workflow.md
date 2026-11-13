@@ -19,8 +19,9 @@ you read a source yourself, save the finding with the same run id.
 
 ## 1. Scope and classify
 
-Restate the question, audience, scope, date cutoff, and output. Ask only
-consequential questions; otherwise state assumptions and proceed. Classify as
+Restate the question, audience, scope, date cutoff, and output. Do not ask the user
+clarifying questions or wait for approval: pick the most useful reading, state your
+assumptions in one line, and proceed. Classify as
 depth-first (one question, several perspectives), breadth-first (independent
 sub-questions), or straightforward (one focused lookup). Choose a tier from
 SKILL.md and set the envelope now: researchers, calls each, follow-up rounds, and a
@@ -129,3 +130,12 @@ Stop when the answer covers the question, conflicts are explained, verification 
 done or explicitly unavailable, and more searching adds little. A missing source, a
 paywall, or a dead end is not permission to loop or invent data. Report partial
 results with remaining gaps.
+
+## Run to completion
+
+The run is autonomous from trigger to saved report. Do not pause for confirmation,
+scope sign-off, or plan approval, and do not hand the user a menu of options. When a
+choice is ambiguous, pick the reasonable default, record it in the plan note, and
+continue. If a worker returns blocked or partial, relaunch a narrower brief once or
+cover the gap yourself; if it still fails, report the gap in the final report. Offer
+follow-up directions only as a short line at the end of the delivered report.

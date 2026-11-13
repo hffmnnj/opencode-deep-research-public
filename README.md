@@ -12,11 +12,18 @@
 
 A deep research workflow for OpenCode V2 that **gets smarter every time you use it**.
 
-It bundles a research skill, three specialist subagents, and two slash commands with a
-persistent **research library**: every finding, source, plan and report is saved as a
-Markdown note, indexed for hybrid keyword and semantic search, and available to every
-future session through a handful of Code Mode tools. The next question on a topic starts
-from what you already know instead of from zero.
+It bundles a research skill and three specialist subagents with a persistent **research
+library**: every finding, source, plan and report is saved as a Markdown note, indexed
+for hybrid keyword and semantic search, and available to every future session through a
+handful of Code Mode tools. The next question on a topic starts from what you already
+know instead of from zero.
+
+It is **agent-first and fully autonomous**. There are no slash commands to remember: a
+short static hint tells every agent the library exists, and agents decide for
+themselves when a question deserves a real investigation. Once started, a run goes from
+plan to saved report without clarifying questions or approval stops.
+
+Works on Linux, macOS and Windows.
 
 ## What you get
 
@@ -26,10 +33,8 @@ from what you already know instead of from zero.
 | `deep-research/researcher` | Read-only evidence worker. Investigates one bounded workstream and saves notes as it goes. |
 | `deep-research/verifier` | Independent auditor. Reopens the original sources and sets note confidence. |
 | `deep-research/librarian` | Curator. Merges duplicates, tightens summaries, refreshes stale notes. |
-| `/research <question>` | Runs the full workflow and saves the result. |
-| `/research-notes <query>` | Searches the library and offers to read a note or start research on a gap. |
 | `tools.research.*` | The library, exposed **only in Code Mode**. No direct tools are added to your tool list. |
-| Static context hint | One short, cache-stable line telling every agent the library exists. Optional. |
+| Static context hint | A short, cache-stable system hint: search the library first, load the skill unprompted when research matters, stay light for lookups. This is the entry point; disable it with `hint: false`. |
 
 ## Quick start
 
@@ -53,15 +58,17 @@ Add it to `opencode.json`:
 }
 ```
 
-OpenCode reloads config on save. Then:
+OpenCode reloads config on save. Then just ask a question that needs evidence:
 
 ```text
-/research What changed in HTTP/3 adoption over the last year, and what is still unresolved?
-/research-notes http3 adoption
+Compare the current HTTP/3 adoption numbers across sources and tell me what is still unresolved.
 ```
 
-Out of the box the library works with keyword search only. Add embeddings for semantic
-search ([below](#embeddings-use-a-server-or-run-your-own)).
+The agent searches the library, decides this needs a multi-source run, loads the skill,
+launches researchers, and delivers a cited report. A quick lookup stays a quick lookup.
+
+Out of the box the library embeds locally (EmbeddingGemma). Use a server, or turn
+embeddings off, as described [below](#embeddings-use-a-server-or-run-your-own).
 
 ## How a run works
 
@@ -197,7 +204,7 @@ Options go in the plugin entry's `options` object. Every option is optional.
 
 | Option | Default | Notes |
 | --- | --- | --- |
-| `libraryPath` | `~/.local/share/opencode-deep-research/library` | Notes, trash and index live here. Honors `XDG_DATA_HOME`. |
+| `libraryPath` | `~/.local/share/opencode-deep-research/library` (macOS, Linux); `%LOCALAPPDATA%\opencode-deep-research\library` (Windows) | Notes, trash and index live here. Honors `XDG_DATA_HOME` on every OS; `~` and `~\` expand to your home folder. |
 | `hint` | `true` | Adds one static line to the system prompt pointing at the library. Static, so it does not break prompt caching. |
 | `models.researcher` / `verifier` / `librarian` | inherit | `provider/model#variant`. Unset means the worker inherits the parent session's model. |
 | `staleDays` | `180 / 30 / 3` | Freshness windows for `slow`, `fast`, `live`. |
@@ -271,12 +278,12 @@ bun run check      # tsc --noEmit and bun test
 
 ```text
 src/
-  index.ts          Plugin.define: registers tools, skill, agents, commands, hint
-  bundle.ts         agent, command and skill definitions
+  index.ts          Plugin.define: registers tools, skill, agents, hint
+  bundle.ts         agent and skill definitions, the static hint
   config.ts         option parsing, secret references
   library/          files, SQLite index, chunking, embedders, hybrid search, audit
   tools/            Code Mode tool definitions
-content/            skill, references, agent prompts, command prompts (Markdown)
+content/            skill, references, agent prompts (Markdown)
 test/               bun tests
 ```
 

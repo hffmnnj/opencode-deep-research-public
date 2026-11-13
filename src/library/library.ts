@@ -1,5 +1,5 @@
-import { mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, join, posix, sep } from "node:path";
 import type { EmbeddingMode } from "../config.ts";
 import { chunkBody, outline, section, type OutlineEntry } from "./chunk.ts";
 import { EmbedUnavailableError, cosine, type Embedder, type EmbedderStatus } from "./embed.ts";
@@ -225,14 +225,28 @@ export class Library {
 
   private notePath(id: string, createdAt: string): string {
     const month = /^\d{4}-\d{2}/.test(createdAt) ? createdAt.slice(0, 7) : "unsorted";
-    return join("notes", month, `${id}.md`);
+    // Stored with "/" on every OS so a library folder synced between machines indexes identically.
+    return posix.join("notes", month, `${id}.md`);
   }
 
   private async writeFileAtomic(absolute: string, content: string): Promise<void> {
     await mkdir(dirname(absolute), { recursive: true });
     const tmp = join(dirname(absolute), `.${basename(absolute)}.${process.pid}.${this.now().toString(36)}.tmp`);
     await writeFile(tmp, content, "utf8");
-    await rename(tmp, absolute);
+    // Windows refuses to replace a file another process (antivirus, indexer, sync client) briefly holds open.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await rename(tmp, absolute);
+        return;
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (attempt >= 5 || (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES")) {
+          await unlink(tmp).catch(() => undefined);
+          throw error;
+        }
+        await new Promise<void>((resolve) => setTimeout(resolve, 40 * (attempt + 1)));
+      }
+    }
   }
 
   private row(id: string): NoteRow | undefined {
@@ -286,7 +300,7 @@ export class Library {
       if (seen.has(id)) continue;
       seen.add(id);
       result.scanned++;
-      const relative = join("notes", entry);
+      const relative = posix.join("notes", ...entry.split(sep));
       let info;
       try {
         info = await stat(join(this.root, relative));
@@ -454,7 +468,6 @@ export class Library {
       const note = await this.readFromRow(row);
       const target = join(this.trashDir, `${id}.md`);
       await this.writeFileAtomic(target, serializeNote(note, { forgotten: { at: new Date(this.now()).toISOString(), reason: reason ?? "" } }));
-      const { unlink } = await import("node:fs/promises");
       await unlink(join(this.root, row.path));
       this.dropCachedNote(id);
       removeNote(this.db, id);

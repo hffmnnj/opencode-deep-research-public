@@ -9,11 +9,12 @@ search({ query: "web search", limit: 10 })
 search({ query: "fetch page", limit: 10 })
 ```
 
-Prefer the `openai_websearch` tools for discovery. For page content use a compliant
-read tool that is available: native `webfetch`, Firecrawl scrape tools, or an
-isolated agent-browser read for JavaScript-heavy pages. Use the same path for the
-whole run when it works. Do not switch providers silently; if a tool is unavailable,
-say so and use another legitimate route or report the block.
+Use whatever search tools your environment provides for discovery, and whatever
+page-reading tools it provides to read sources, including any that handle
+JavaScript-heavy pages. Follow any search-tool preference your instructions already
+state. Use the same path for the whole run when it works. Do not switch providers
+silently; if a tool is unavailable, say so and use another legitimate route or report
+the block.
 
 ## Search technique
 
@@ -27,8 +28,9 @@ say so and use another legitimate route or report the block.
   disconfirming angle.
 - Stop at diminishing returns. Report the budget you used.
 
-Budget: straightforward 3-5 tool calls, Standard about 8, Deep or Rigorous up to 15
-searches and reads per researcher. Stay inside the assignment.
+Budget per researcher: straightforward 8-12 tool calls, Standard about 25, Deep up to
+50, Rigorous no fixed cap (stop on saturation or when the assigned scope is
+exhausted). Stay inside the assignment.
 
 ## Which sources
 

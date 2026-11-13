@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { DEFAULT_STALE_DAYS, type StaleWindows } from "./library/types.ts";
 
 export type EmbeddingMode = "auto" | "server" | "local" | "off";
@@ -59,12 +60,15 @@ const num = (v: unknown): number | undefined => (typeof v === "number" && Number
 
 export function expandHome(path: string): string {
   if (path === "~") return homedir();
-  if (path.startsWith("~/")) return join(homedir(), path.slice(2));
+  if (path.startsWith("~/") || path.startsWith("~\\")) return join(homedir(), path.slice(2));
   return path;
 }
 
-export function defaultDataDir(env: NodeJS.ProcessEnv = process.env): string {
-  return join(env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "opencode-deep-research");
+/** Same base OpenCode uses: XDG_DATA_HOME, else `~/.local/share` (macOS, Linux) or `%LOCALAPPDATA%` (Windows). */
+export function defaultDataDir(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): string {
+  const base =
+    env.XDG_DATA_HOME ?? (platform === "win32" && env.LOCALAPPDATA ? env.LOCALAPPDATA : join(homedir(), ".local", "share"));
+  return join(base, "opencode-deep-research");
 }
 
 /** Resolve a secret given as a literal, `env://NAME`, or `file://path` so keys never need to live in opencode.json. */
@@ -73,7 +77,9 @@ export function resolveSecret(value: string | undefined, env: NodeJS.ProcessEnv 
   if (value.startsWith("env://")) return str(env[value.slice(6)]);
   if (value.startsWith("file://")) {
     try {
-      return str(readFileSync(resolve(expandHome(value.slice(7))), "utf8"));
+      // Proper file URLs (file:///C:/x on Windows, file:///home/x elsewhere); `file://~/x` and relative paths also work.
+      const target = /^file:\/\/\/|^file:\/\/[^/~.]/.test(value) ? fileURLToPath(value) : value.slice(7);
+      return str(readFileSync(resolve(expandHome(target)), "utf8"));
     } catch {
       return undefined;
     }

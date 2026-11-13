@@ -1,5 +1,5 @@
 import { Plugin, Skill } from "@opencode/plugin";
-import { AGENTS, COMMANDS, LIBRARY_HINT, agentPrompt, commandText, loadSkill, parseModelRef } from "./bundle.ts";
+import { AGENTS, LIBRARY_HINT, agentPrompt, loadSkill, parseModelRef } from "./bundle.ts";
 import { parseConfig } from "./config.ts";
 import { acquireLibrary } from "./runtime.ts";
 import { TOOL_NAMESPACE, buildTools } from "./tools/tools.ts";
@@ -48,7 +48,7 @@ export default Plugin.define({
           agent.name = spec.name as never;
           agent.description = spec.description;
           agent.mode = "subagent";
-          agent.steps = spec.steps;
+          if (spec.steps !== undefined) agent.steps = spec.steps;
           agent.system = prompts.get(spec.id) ?? "";
           agent.permissions = spec.permissions.map((rule) => ({ ...rule }));
           const configured = config.models[spec.modelKey];
@@ -56,18 +56,6 @@ export default Plugin.define({
           if (model) agent.model = model as never;
         });
         if (!editor.get(spec.id)) log(`agent ${spec.id} was not registered by this OpenCode version`);
-      }
-    });
-
-    await ctx.command.transform((editor) => {
-      for (const spec of COMMANDS) {
-        editor.add({
-          name: spec.name,
-          description: spec.description,
-          execute: async ({ sessionID, prompt, delivery }) => {
-            await ctx.session.prompt({ ...prompt, sessionID, text: commandText(spec, prompt.text ?? ""), delivery });
-          },
-        });
       }
     });
 
