@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Deep Research: parallel agents, verified evidence, a research library that remembers" width="100%">
+  <img src="https://unpkg.com/hffmnnj.deep-research/assets/banner.png" alt="Deep Research: parallel agents, verified evidence, a research library that remembers" width="100%">
 </p>
 
 <p align="center">
@@ -8,7 +8,7 @@
   <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-8B95A7?style=flat-square&labelColor=0B1220">
 </p>
 
-# opencode-deep-research
+# hffmnnj.deep-research
 
 A deep research workflow for OpenCode V2 that **gets smarter every time you use it**.
 
@@ -38,25 +38,27 @@ Works on Linux, macOS and Windows.
 
 ## Quick start
 
-Requires OpenCode V2 (Bun runtime).
+Requires OpenCode V2. Add the package to `opencode.json`; OpenCode installs it for you:
 
-```sh
-git clone https://github.com/hffmnnj/opencode-deep-research
-cd opencode-deep-research && bun install
+```jsonc
+{
+  "plugins": ["hffmnnj.deep-research"]
+}
 ```
 
-Add it to `opencode.json`:
+With options:
 
 ```jsonc
 {
   "plugins": [
-    {
-      "package": "/path/to/opencode-deep-research",
-      "options": {}
-    }
+    { "package": "hffmnnj.deep-research", "options": { "embedding": { "mode": "auto" } } }
   ]
 }
 ```
+
+The npm package and the plugin id are both `hffmnnj.deep-research`. To hack on it
+instead, clone this repo, run `bun install`, and point `package` at the folder. The
+full walkthrough is in the [usage guide](docs/GUIDE.md).
 
 OpenCode reloads config on save. Then just ask a question that needs evidence:
 
@@ -191,7 +193,7 @@ Options go in the plugin entry's `options` object. Every option is optional.
 
 ```jsonc
 {
-  "package": "/path/to/opencode-deep-research",
+  "package": "hffmnnj.deep-research",
   "options": {
     "libraryPath": "~/research-library",
     "hint": true,

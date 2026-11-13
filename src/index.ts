@@ -5,7 +5,7 @@ import { acquireLibrary } from "./runtime.ts";
 import { TOOL_NAMESPACE, buildTools } from "./tools/tools.ts";
 
 export default Plugin.define({
-  id: "deep-research",
+  id: "hffmnnj.deep-research",
   async setup(ctx) {
     const config = parseConfig(ctx.options);
     const log = (message: string) => console.error(`[deep-research] ${message}`);
