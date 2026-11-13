@@ -1,6 +1,10 @@
 {
-  "name": "opencode-deep-research",
+  "name": "hffmnnj.deep-research",
   "version": "0.1.0",
+  "homepage": "https://github.com/hffmnnj/opencode-deep-research#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/hffmnnj/opencode-deep-research.git" },
+  "bugs": { "url": "https://github.com/hffmnnj/opencode-deep-research/issues" },
+  "publishConfig": { "access": "public" },
   "description": "Deep research for OpenCode V2: parallel evidence-grounded research agents plus a persistent, searchable research-notes library.",
   "type": "module",
   "license": "MIT",
@@ -18,8 +22,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src", "content", "assets/logo.png", "README.md", "LICENSE"],
+  "files": ["src", "content", "assets/logo.png", "assets/banner.png", "docs/GUIDE.md", "index.ts", "README.md", "LICENSE"],
   "scripts": {
+    "prepublishOnly": "bun run check",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "check": "bun run typecheck && bun run test"
