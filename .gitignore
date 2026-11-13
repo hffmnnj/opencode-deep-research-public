@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+bun.lockb
+
+# Local planning notes (not part of the product)
+docs/SPEC.md
+docs/ROADMAP.md

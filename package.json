@@ -1,0 +1,38 @@
+{
+  "name": "opencode-deep-research",
+  "version": "0.1.0",
+  "description": "Deep research for OpenCode V2: parallel evidence-grounded research agents plus a persistent, searchable research-notes library.",
+  "type": "module",
+  "license": "MIT",
+  "author": "hffmnnj",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "deep-research",
+    "research",
+    "agents",
+    "rag",
+    "knowledge-base"
+  ],
+  "engines": { "bun": ">=1.4.2" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src", "content", "assets/logo.png", "README.md", "LICENSE"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run typecheck && bun run test"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.3.0"
+  },
+  "optionalDependencies": {
+    "@huggingface/transformers": "^4.3.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/node": "^22.13.9",
+    "typescript": "^5.9.3"
+  }
+}
