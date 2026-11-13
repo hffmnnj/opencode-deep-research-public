@@ -1,0 +1,82 @@
+import { Plugin, Skill } from "@opencode/plugin";
+import { AGENTS, COMMANDS, LIBRARY_HINT, agentPrompt, commandText, loadSkill, parseModelRef } from "./bundle.ts";
+import { parseConfig } from "./config.ts";
+import { acquireLibrary } from "./runtime.ts";
+import { TOOL_NAMESPACE, buildTools } from "./tools/tools.ts";
+
+export default Plugin.define({
+  id: "deep-research",
+  async setup(ctx) {
+    const config = parseConfig(ctx.options);
+    const log = (message: string) => console.error(`[deep-research] ${message}`);
+    const handle = acquireLibrary(config, log);
+
+    // Research library tools live in Code Mode only: tools.research.<name>(…), never as direct tools.
+    const tools = buildTools({ library: handle.get, windows: config.staleDays });
+    await ctx.tool.transform((editor) => {
+      editor.namespace(TOOL_NAMESPACE);
+      for (const tool of tools) {
+        editor.add({
+          name: tool.name,
+          description: tool.description,
+          input: tool.input as never,
+          output: tool.output as never,
+          options: { namespace: TOOL_NAMESPACE.name, codemode: true },
+          execute: async (input) => {
+            const result = await tool.execute(input);
+            return { output: result.output as never, content: result.content };
+          },
+        });
+      }
+    });
+
+    const skill = loadSkill();
+    await ctx.skill.transform((editor) => {
+      editor.add({
+        id: Skill.ID.make(skill.id),
+        name: Skill.Name.make(skill.name),
+        description: skill.description,
+        path: Skill.Info.fields.path.make(skill.path),
+        content: skill.content,
+      });
+    });
+
+    const prompts = new Map(AGENTS.map((spec) => [spec.id, agentPrompt(spec)]));
+    await ctx.agent.transform((editor) => {
+      for (const spec of AGENTS) {
+        editor.update(spec.id, (agent) => {
+          agent.name = spec.name as never;
+          agent.description = spec.description;
+          agent.mode = "subagent";
+          agent.steps = spec.steps;
+          agent.system = prompts.get(spec.id) ?? "";
+          agent.permissions = spec.permissions.map((rule) => ({ ...rule }));
+          const configured = config.models[spec.modelKey];
+          const model = configured ? parseModelRef(configured) : undefined;
+          if (model) agent.model = model as never;
+        });
+        if (!editor.get(spec.id)) log(`agent ${spec.id} was not registered by this OpenCode version`);
+      }
+    });
+
+    await ctx.command.transform((editor) => {
+      for (const spec of COMMANDS) {
+        editor.add({
+          name: spec.name,
+          description: spec.description,
+          execute: async ({ sessionID, prompt, delivery }) => {
+            await ctx.session.prompt({ ...prompt, sessionID, text: commandText(spec, prompt.text ?? ""), delivery });
+          },
+        });
+      }
+    });
+
+    if (config.hint) {
+      await ctx.session.hook("context", (event) => {
+        event.system.push({ type: "text", text: LIBRARY_HINT });
+      });
+    }
+
+    return () => handle.release();
+  },
+});
