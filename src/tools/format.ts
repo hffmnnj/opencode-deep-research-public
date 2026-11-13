@@ -1,6 +1,15 @@
 import type { Card } from "../library/library.ts";
 import { approxTokens } from "../library/search.ts";
 
+/**
+ * Structured tool output must be a plain JSON value: OpenCode rejects the whole result if any field is undefined
+ * (optional note fields such as runId) or a non-finite number. A JSON round-trip drops undefined keys and turns
+ * undefined array items and NaN/Infinity into null, matching what callers would see over the wire.
+ */
+export function toJsonObject(value: Record<string, unknown>): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+}
+
 export function formatCard(card: Card): string {
   const flags = [card.stale ? "STALE" : "", card.confidence === "disputed" ? "DISPUTED" : "", card.superseded ? "SUPERSEDED" : ""].filter(Boolean);
   const head = `${card.id} ${card.kind}/${card.confidence} ${card.ageDays}d${flags.length ? ` [${flags.join(",")}]` : ""}  ${card.title}`;

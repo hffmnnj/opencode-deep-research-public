@@ -2,6 +2,7 @@ import { Plugin, Skill } from "@opencode/plugin";
 import { AGENTS, LIBRARY_HINT, agentPrompt, loadSkill, parseModelRef } from "./bundle.ts";
 import { parseConfig } from "./config.ts";
 import { acquireLibrary } from "./runtime.ts";
+import { toJsonObject } from "./tools/format.ts";
 import { TOOL_NAMESPACE, buildTools } from "./tools/tools.ts";
 
 export default Plugin.define({
@@ -24,7 +25,7 @@ export default Plugin.define({
           options: { namespace: TOOL_NAMESPACE.name, codemode: true },
           execute: async (input) => {
             const result = await tool.execute(input);
-            return { output: result.output as never, content: result.content };
+            return { output: toJsonObject(result.output) as never, content: result.content };
           },
         });
       }
