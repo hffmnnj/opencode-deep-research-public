@@ -109,3 +109,32 @@ test("registeredTools_saveThenSearchThenAuditEndToEnd", async () => {
   await expect(call("save", { title: "x", summary: "bad id link", links: ["nope"] })).rejects.toThrow(/note ids/);
   if (cleanupPlugin) cleanupPlugin();
 });
+
+/** Paths holding values OpenCode's structured-output check rejects (undefined, NaN, Infinity). */
+function nonJsonPaths(value: unknown, path = "output"): string[] {
+  if (value === undefined || (typeof value === "number" && !Number.isFinite(value))) return [path];
+  if (value === null || typeof value !== "object") return [];
+  return Object.entries(value).flatMap(([key, item]) => nonJsonPaths(item, `${path}.${key}`));
+}
+
+test("registeredTools_returnPlainJsonOutputForNotesWithoutOptionalFields", async () => {
+  // A note saved without runId or supersededBy used to make read (and stats with embeddings off) return undefined
+  // fields, which OpenCode rejects as "non-JSON value for its output schema".
+  const f = fakeContext({ libraryPath: join(dir, "lib"), embedding: { mode: "off" } });
+  const cleanupPlugin = await setup(f.ctx);
+  const call = (name: string, input: unknown) => f.tools.find((t) => t.name === name)!.execute(input);
+  const saved = await call("save", { title: "Plain note", summary: "No run id.", body: "## A\n\nText.", sources: [{ url: "https://example.com/a" }] });
+  const id = saved.output?.id as string;
+  for (const [name, input] of [
+    ["read", { id }],
+    ["read", { id, view: "card" }],
+    ["read", { id, view: "outline" }],
+    ["stats", {}],
+  ] as const) {
+    const result = await call(name, input);
+    expect({ name, input, paths: nonJsonPaths(result.output) }).toEqual({ name, input, paths: [] });
+  }
+  const read = await call("read", { id });
+  expect((read.output?.notes as { id: string; title: string }[])[0]).toMatchObject({ id, title: "Plain note" });
+  if (cleanupPlugin) cleanupPlugin();
+});
